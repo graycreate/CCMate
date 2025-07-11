@@ -13,7 +13,7 @@ struct ContentView: View {
             
             HourlyChartView()
                 .padding(.horizontal)
-                .padding(.bottom)
+                .padding(.bottom, 8)
             
             Divider()
             

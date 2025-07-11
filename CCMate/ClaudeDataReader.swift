@@ -44,7 +44,9 @@ class ClaudeDataReader {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
         let todayString = dateFormatter.string(from: Date())
-        return claudeConfigPath.appendingPathComponent("usage_\(todayString).jsonl")
+        let filePath = claudeConfigPath.appendingPathComponent("usage_\(todayString).jsonl")
+        print("Looking for Claude usage file at: \(filePath.path)")
+        return filePath
     }
     
     func readTodayUsage() -> [ClaudeUsageEntry] {
@@ -52,6 +54,24 @@ class ClaudeDataReader {
         
         guard fileManager.fileExists(atPath: filePath.path) else {
             // This is normal if Claude hasn't been used today
+            print("Claude usage file does not exist at: \(filePath.path)")
+            
+            // Let's check what files exist in the Claude config directory
+            if fileManager.fileExists(atPath: claudeConfigPath.path) {
+                do {
+                    let files = try fileManager.contentsOfDirectory(at: claudeConfigPath, includingPropertiesForKeys: nil)
+                    let usageFiles = files.filter { $0.lastPathComponent.contains("usage_") }
+                    print("Found \(usageFiles.count) usage files in Claude config:")
+                    for file in usageFiles {
+                        print("  - \(file.lastPathComponent)")
+                    }
+                } catch {
+                    print("Error listing Claude config directory: \(error)")
+                }
+            } else {
+                print("Claude config directory does not exist at: \(claudeConfigPath.path)")
+            }
+            
             return []
         }
         

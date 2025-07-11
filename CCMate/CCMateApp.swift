@@ -7,7 +7,7 @@ struct CCMateApp: App {
     var body: some Scene {
         MenuBarExtra {
             ContentView()
-                .frame(width: 280, height: 320)
+                .frame(width: 280, height: 400)
                 .environmentObject(appState)
         } label: {
             Label("CCMate", systemImage: "chart.bar.fill")
