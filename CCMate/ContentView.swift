@@ -86,7 +86,7 @@ struct StatsView: View {
                 HStack(spacing: 20) {
                     StatCard(
                         title: "Avg. Session",
-                        value: appState.dailyStats.averageSessionLength,
+                        value: appState.dailyStats.averageSessionLengthFormatted,
                         icon: "chart.line.uptrend.xyaxis",
                         color: .orange
                     )

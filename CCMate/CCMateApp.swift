@@ -17,6 +17,7 @@ struct CCMateApp: App {
     }
 }
 
+@MainActor
 class AppState: ObservableObject {
     @Published var dailyStats = DailyStats()
     @Published var isTracking = false
@@ -40,7 +41,9 @@ class AppState: ObservableObject {
         
         // Also refresh periodically (every 30 seconds) to update relative times
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.loadCurrentStats()
+            Task { @MainActor in
+                self?.loadCurrentStats()
+            }
         }
         
         // Initial load
@@ -85,7 +88,7 @@ struct DailyStats {
         return String(format: "%dh %dm", hours, minutes)
     }
     
-    var averageSessionLength: String {
+    var averageSessionLengthFormatted: String {
         guard sessions > 0 else { return "0m" }
         let avgMinutes = Int(averageSessionLength / 60)
         if avgMinutes >= 60 {

@@ -21,6 +21,7 @@ struct ClaudeUsageEntry: Codable {
 }
 
 class ClaudeDataReader {
+    @MainActor
     static let shared = ClaudeDataReader()
     
     private let dateFormatter: DateFormatter = {

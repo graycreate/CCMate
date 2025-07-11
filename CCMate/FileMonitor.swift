@@ -1,6 +1,6 @@
 import Foundation
 
-class FileMonitor {
+final class FileMonitor: @unchecked Sendable {
     private var fileDescriptor: CInt = -1
     private var source: DispatchSourceFileSystemObject?
     private let queue = DispatchQueue(label: "com.ccmate.filemonitor", attributes: .concurrent)
@@ -59,6 +59,7 @@ class FileMonitor {
     }
 }
 
+@MainActor
 class ClaudeFileWatcher {
     private let fileMonitor = FileMonitor()
     private let directoryMonitor = FileMonitor()
