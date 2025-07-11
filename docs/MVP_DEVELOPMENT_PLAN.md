@@ -1,49 +1,49 @@
-# CCMate MVP 开发计划
+# CCMate MVP Development Plan
 
-## MVP 目标
+## MVP Goals
 
-构建一个轻量级的 macOS 菜单栏应用，实时监控 Claude Code 的使用情况，包含两个核心功能：
-1. **Daily 标签页**：展示当天的实时使用详情
-2. **Analytics 标签页**：展示使用统计和趋势
+Build a lightweight macOS menubar application for real-time Claude Code usage monitoring with two core features:
+1. **Daily Tab**: Display real-time usage details for the current day
+2. **Analytics Tab**: Show usage statistics and trends
 
-## 技术架构
+## Technical Architecture
 
-### 核心组件
-- **数据层**：ClaudeDataReader - 读取和解析 JSONL 文件
-- **监控层**：FileMonitor - 监控文件变化，实时更新
-- **UI 层**：SwiftUI 实现的两个标签页
-- **菜单栏**：显示当前使用百分比
+### Core Components
+- **Data Layer**: ClaudeDataReader - Read and parse JSONL files
+- **Monitoring Layer**: FileMonitor - Monitor file changes for real-time updates
+- **UI Layer**: Two tabs implemented with SwiftUI
+- **Menubar**: Display current usage percentage
 
-### 数据流
+### Data Flow
 ```
-Claude JSONL 文件 → FileMonitor → ClaudeDataReader → DataModel → UI更新
+Claude JSONL Files → FileMonitor → ClaudeDataReader → DataModel → UI Updates
 ```
 
-## 开发阶段
+## Development Phases
 
-### 第一阶段：数据基础设施（2天）
+### Phase 1: Data Infrastructure (2 days)
 
-#### 1.1 实现 ClaudeDataReader
+#### 1.1 Implement ClaudeDataReader
 ```swift
 class ClaudeDataReader {
-    // 查找 Claude 配置目录
+    // Find Claude configuration directory
     func findClaudeConfigDirectory() -> URL?
     
-    // 扫描所有 JSONL 文件
+    // Scan all JSONL files
     func scanJSONLFiles(in directory: URL) -> [URL]
     
-    // 解析单个 JSONL 文件
+    // Parse single JSONL file
     func parseJSONLFile(at url: URL) -> [UsageEntry]
     
-    // 聚合今日数据
+    // Aggregate today's data
     func getTodayUsage() -> DailyUsage
     
-    // 获取历史数据
+    // Get historical data
     func getHistoricalUsage(days: Int) -> [DailyUsage]
 }
 ```
 
-#### 1.2 定义数据模型
+#### 1.2 Define Data Models
 ```swift
 struct UsageEntry {
     let timestamp: Date
@@ -60,7 +60,7 @@ struct DailyUsage {
     let totalTokens: Int
     let totalCost: Double
     let sessions: [SessionBlock]
-    let hourlyDistribution: [Int] // 24小时分布
+    let hourlyDistribution: [Int] // 24-hour distribution
 }
 
 struct SessionBlock {
@@ -72,34 +72,34 @@ struct SessionBlock {
 }
 ```
 
-### 第二阶段：UI 实现（3天）
+### Phase 2: UI Implementation (3 days)
 
-#### 2.1 Daily 标签页
-显示内容：
-- 今日使用概览卡片
-  - 总 Token 使用量和百分比
-  - 总成本
-  - 活跃会话数
-  - 最后更新时间
-- 会话时间线
-  - 5小时会话块可视化
-  - 当前活跃会话高亮
-- 小时分布图
-  - 24小时使用分布柱状图
+#### 2.1 Daily Tab
+Display content:
+- Today's usage overview cards
+  - Total token usage and percentage
+  - Total cost
+  - Active sessions count
+  - Last update time
+- Session timeline
+  - 5-hour session block visualization
+  - Current active session highlighting
+- Hourly distribution chart
+  - 24-hour usage distribution bar chart
 
-#### 2.2 Analytics 标签页
-显示内容：
-- 7天使用趋势图
-  - Token 使用量折线图
-  - 成本趋势
-- 使用统计
-  - 平均每日使用量
-  - 峰值使用时段
-  - 使用速率（tokens/小时）
-- 模型使用分布
-  - 不同模型的使用占比
+#### 2.2 Analytics Tab
+Display content:
+- 7-day usage trend chart
+  - Token usage line chart
+  - Cost trends
+- Usage statistics
+  - Average daily usage
+  - Peak usage hours
+  - Usage rate (tokens/hour)
+- Model usage distribution
+  - Usage percentage by different models
 
-#### 2.3 TabView 实现
+#### 2.3 TabView Implementation
 ```swift
 struct ContentView: View {
     @StateObject private var dataManager = ClaudeDataManager()
@@ -121,9 +121,9 @@ struct ContentView: View {
 }
 ```
 
-### 第三阶段：实时监控（2天）
+### Phase 3: Real-time Monitoring (2 days)
 
-#### 3.1 文件监控器
+#### 3.1 File Monitor
 ```swift
 class FileMonitor {
     private var fileWatcher: DispatchSourceFileSystemObject?
@@ -133,45 +133,45 @@ class FileMonitor {
 }
 ```
 
-#### 3.2 菜单栏更新
-- 每30秒更新一次
-- 显示使用百分比
-- 颜色编码：绿色(<70%)、黄色(70-90%)、红色(>90%)
+#### 3.2 Menubar Updates
+- Update every 30 seconds
+- Display usage percentage
+- Color coding: Green (<70%), Yellow (70-90%), Red (>90%)
 
-### 第四阶段：完善和优化（1天）
+### Phase 4: Refinement and Optimization (1 day)
 
-#### 4.1 性能优化
-- 实现增量数据读取
-- 添加数据缓存
-- 优化大文件解析
+#### 4.1 Performance Optimization
+- Implement incremental data reading
+- Add data caching
+- Optimize large file parsing
 
-#### 4.2 用户体验
-- 添加加载状态
-- 错误处理和提示
-- 数据刷新动画
+#### 4.2 User Experience
+- Add loading states
+- Error handling and prompts
+- Data refresh animations
 
-## UI 设计规范
+## UI Design Guidelines
 
-### 遵循 Apple Human Interface Guidelines
+### Following Apple Human Interface Guidelines
 
-#### 设计原则
-- **清晰性**：使用 SF Pro 字体，适当的字号和对比度
-- **一致性**：使用系统标准控件和颜色
-- **直观性**：信息层级分明，重要信息突出
-- **原生感**：使用 macOS 标准间距和布局
+#### Design Principles
+- **Clarity**: Use SF Pro font with appropriate sizes and contrast
+- **Consistency**: Use system standard controls and colors
+- **Intuitiveness**: Clear information hierarchy with prominent key info
+- **Native Feel**: Use standard macOS spacing and layout
 
-#### 视觉风格
-- **背景**：使用 `NSColor.windowBackgroundColor`
-- **卡片**：使用 `NSVisualEffectView` 实现毛玻璃效果
-- **强调色**：使用系统 accent color
-- **图表**：使用 Swift Charts 框架
+#### Visual Style
+- **Background**: Use `NSColor.windowBackgroundColor`
+- **Cards**: Use `NSVisualEffectView` for frosted glass effect
+- **Accent Color**: Use system accent color
+- **Charts**: Use Swift Charts framework
 
-### Daily 标签页设计
+### Daily Tab Design
 
-#### 布局结构
+#### Layout Structure
 ```swift
 VStack(spacing: 16) {
-    // 顶部标题区
+    // Top title area
     HStack {
         Text("Today's Usage")
             .font(.largeTitle)
@@ -180,7 +180,7 @@ VStack(spacing: 16) {
             .foregroundColor(.secondary)
     }
     
-    // 统计卡片组
+    // Statistics card group
     HStack(spacing: 12) {
         StatCard(title: "Tokens", 
                 value: "2.5M", 
@@ -197,12 +197,12 @@ VStack(spacing: 16) {
                 systemImage: "clock")
     }
     
-    // 会话时间线
+    // Session timeline
     GroupBox("Session Timeline") {
         SessionTimelineView()
     }
     
-    // 小时分布图表
+    // Hourly distribution chart
     GroupBox("Hourly Distribution") {
         Chart(hourlyData) { item in
             BarMark(
@@ -216,17 +216,17 @@ VStack(spacing: 16) {
 .padding()
 ```
 
-#### 组件设计
-- **StatCard**: 使用 `GroupBox` 样式，包含 SF Symbol 图标
-- **进度指示**: 使用 `ProgressView` 或 `Gauge`（macOS 13+）
-- **图表**: 使用 Swift Charts 的 `BarMark` 和 `LineMark`
+#### Component Design
+- **StatCard**: Use `GroupBox` style with SF Symbol icons
+- **Progress Indicators**: Use `ProgressView` or `Gauge` (macOS 13+)
+- **Charts**: Use Swift Charts' `BarMark` and `LineMark`
 
-### Analytics 标签页设计
+### Analytics Tab Design
 
-#### 布局结构
+#### Layout Structure
 ```swift
 VStack(spacing: 16) {
-    // 趋势图表
+    // Trend chart
     GroupBox("7-Day Usage Trend") {
         Chart(weeklyData) { item in
             LineMark(
@@ -244,7 +244,7 @@ VStack(spacing: 16) {
         .frame(height: 200)
     }
     
-    // 统计信息
+    // Statistics info
     GroupBox("Statistics") {
         VStack(alignment: .leading, spacing: 8) {
             Label("Average Daily: 3.2M tokens", 
@@ -257,7 +257,7 @@ VStack(spacing: 16) {
         .font(.system(.body, design: .rounded))
     }
     
-    // 模型使用分布
+    // Model usage distribution
     GroupBox("Model Usage") {
         VStack(spacing: 8) {
             ModelUsageRow(model: "Claude 3 Sonnet", 
@@ -270,9 +270,9 @@ VStack(spacing: 16) {
 .padding()
 ```
 
-### 颜色方案
+### Color Scheme
 
-#### 自适应颜色（支持深色模式）
+#### Adaptive Colors (Dark Mode Support)
 ```swift
 extension Color {
     static let cardBackground = Color(NSColor.controlBackgroundColor)
@@ -284,62 +284,62 @@ extension Color {
 }
 ```
 
-#### 使用状态颜色
-- **正常 (<70%)**: `systemGreen`
-- **警告 (70-90%)**: `systemYellow`
-- **危险 (>90%)**: `systemRed`
+#### Usage Status Colors
+- **Normal (<70%)**: `systemGreen`
+- **Warning (70-90%)**: `systemYellow`
+- **Danger (>90%)**: `systemRed`
 
-### 动画和过渡
+### Animations and Transitions
 
-- **数据更新**: 使用 `withAnimation(.easeInOut(duration: 0.3))`
-- **图表动画**: Chart 自带的默认动画
-- **进度变化**: 平滑过渡，避免跳动
+- **Data Updates**: Use `withAnimation(.easeInOut(duration: 0.3))`
+- **Chart Animations**: Default Chart animations
+- **Progress Changes**: Smooth transitions to avoid jumping
 
-### 响应式设计
+### Responsive Design
 
-- **最小窗口尺寸**: 600x500
-- **内容自适应**: 使用 `GeometryReader` 响应窗口变化
-- **紧凑模式**: 窗口较小时隐藏次要信息
+- **Minimum Window Size**: 600x500
+- **Content Adaptation**: Use `GeometryReader` to respond to window changes
+- **Compact Mode**: Hide secondary info when window is small
 
-## 实现优先级
+## Implementation Priority
 
-### 必须实现（MVP）
-1. ✅ 读取 Claude JSONL 文件
-2. ✅ 解析使用数据
-3. ✅ Daily 标签页基础功能
-4. ✅ Analytics 标签页基础功能
-5. ✅ 菜单栏百分比显示
-6. ✅ 30秒自动刷新
+### Must Have (MVP)
+1. ✅ Read Claude JSONL files
+2. ✅ Parse usage data
+3. ✅ Daily tab basic functionality
+4. ✅ Analytics tab basic functionality
+5. ✅ Menubar percentage display
+6. ✅ 30-second auto refresh
 
-### 可选功能（后续版本）
-- 自定义 token 限额
-- 使用预警通知
-- 数据导出功能
-- 深色模式切换
-- 偏好设置面板
+### Optional Features (Future Versions)
+- Custom token limits
+- Usage warning notifications
+- Data export functionality
+- Dark mode toggle
+- Preferences panel
 
-## 开发时间表
+## Development Timeline
 
-| 阶段 | 任务 | 预计时间 | 完成标准 |
-|------|------|----------|----------|
-| 1 | 数据基础设施 | 2天 | 能正确读取和解析 Claude 数据 |
-| 2 | UI 实现 | 3天 | 两个标签页功能完整 |
-| 3 | 实时监控 | 2天 | 数据自动更新，菜单栏显示正常 |
-| 4 | 完善优化 | 1天 | 性能良好，用户体验流畅 |
+| Phase | Task | Estimated Time | Completion Criteria |
+|-------|------|----------------|---------------------|
+| 1 | Data Infrastructure | 2 days | Correctly read and parse Claude data |
+| 2 | UI Implementation | 3 days | Both tabs fully functional |
+| 3 | Real-time Monitoring | 2 days | Auto data updates, menubar display working |
+| 4 | Refinement & Optimization | 1 day | Good performance, smooth UX |
 
-**总计：8天完成 MVP**
+**Total: 8 days to complete MVP**
 
-## 成功标准
+## Success Criteria
 
-1. **功能完整**：能准确显示 Claude 使用数据
-2. **实时更新**：30秒内反映最新使用情况
-3. **性能良好**：内存占用 <50MB，CPU 使用率 <5%
-4. **用户友好**：界面清晰，信息一目了然
+1. **Feature Complete**: Accurately displays Claude usage data
+2. **Real-time Updates**: Reflects latest usage within 30 seconds
+3. **Good Performance**: Memory usage <50MB, CPU usage <5%
+4. **User Friendly**: Clear interface, information at a glance
 
-## 下一步行动
+## Next Steps
 
-1. 开始实现 ClaudeDataReader 类
-2. 创建数据模型结构
-3. 设计 UI 组件
-4. 集成文件监控
-5. 测试和优化
+1. Start implementing ClaudeDataReader class
+2. Create data model structures
+3. Design UI components
+4. Integrate file monitoring
+5. Test and optimize

@@ -1,25 +1,25 @@
-# Claude 使用数据来源详解
+# Claude Usage Data Source Guide
 
-## 概述
+## Overview
 
-CCSeva 通过 `ccusage` npm 包获取 Claude Code 的使用数据。这些数据来自 Claude 应用程序在本地存储的 JSONL 格式文件。
+CCSeva retrieves Claude Code usage data through the `ccusage` npm package. This data comes from JSONL format files stored locally by the Claude application.
 
-## 数据存储位置
+## Data Storage Locations
 
-Claude 将使用数据存储在以下位置（按优先级排序）：
+Claude stores usage data in the following locations (in order of priority):
 
-1. **环境变量指定路径**：`$CLAUDE_CONFIG_DIR`（支持逗号分隔的多个路径）
-2. **XDG 配置目录**：`$XDG_CONFIG_HOME/claude` 或 `~/.config/claude`
-3. **传统路径**：`~/.claude`
+1. **Environment variable path**: `$CLAUDE_CONFIG_DIR` (supports comma-separated multiple paths)
+2. **XDG config directory**: `$XDG_CONFIG_HOME/claude` or `~/.config/claude`
+3. **Legacy path**: `~/.claude`
 
-实际数据文件位于：
+Actual data files are located at:
 ```
 <claude_config_dir>/projects/**/*.jsonl
 ```
 
-## 数据文件格式
+## Data File Format
 
-Claude 使用 **JSONL（JSON Lines）** 格式存储数据，每行是一个独立的 JSON 对象：
+Claude uses **JSONL (JSON Lines)** format to store data, where each line is an independent JSON object:
 
 ```json
 {
@@ -27,85 +27,85 @@ Claude 使用 **JSONL（JSON Lines）** 格式存储数据，每行是一个独�
   "version": "1.0.0",
   "message": {
     "usage": {
-      "input_tokens": 1000,          // 输入 token 数
-      "output_tokens": 500,          // 输出 token 数
-      "cache_creation_input_tokens": 25,  // 缓存创建 token
-      "cache_read_input_tokens": 10      // 缓存读取 token
+      "input_tokens": 1000,          // Input token count
+      "output_tokens": 500,          // Output token count
+      "cache_creation_input_tokens": 25,  // Cache creation tokens
+      "cache_read_input_tokens": 10      // Cache read tokens
     },
-    "model": "claude-sonnet-4-20250514",  // 使用的模型
-    "id": "msg_unique_id",               // 消息唯一标识
-    "content": [{ "text": "..." }]       // 消息内容
+    "model": "claude-sonnet-4-20250514",  // Model used
+    "id": "msg_unique_id",               // Message unique identifier
+    "content": [{ "text": "..." }]       // Message content
   },
-  "costUSD": 0.01,                      // 预计算的成本（美元）
-  "requestId": "req_unique_id",         // 请求唯一标识
-  "isApiErrorMessage": false            // 是否为错误消息
+  "costUSD": 0.01,                      // Pre-calculated cost (USD)
+  "requestId": "req_unique_id",         // Request unique identifier
+  "isApiErrorMessage": false            // Whether it's an error message
 }
 ```
 
-## 数据获取流程
+## Data Acquisition Process
 
-### 1. 文件发现
+### 1. File Discovery
 ```typescript
-// ccusage 扫描项目目录下的所有 .jsonl 文件
+// ccusage scans all .jsonl files in the project directory
 const files = glob.sync('**/*.jsonl', {
   cwd: projectDir,
   absolute: true
 });
 ```
 
-### 2. 数据解析
+### 2. Data Parsing
 ```typescript
-// 逐行读取 JSONL 文件
+// Read JSONL file line by line
 const lines = fs.readFileSync(file, 'utf-8').split('\n');
 for (const line of lines) {
   if (line.trim()) {
     const data = JSON.parse(line);
-    // 验证和处理数据...
+    // Validate and process data...
   }
 }
 ```
 
-### 3. 数据去重
-- 使用 `message.id + requestId` 组合作为唯一标识
-- 防止重复计算相同的使用记录
+### 3. Data Deduplication
+- Uses `message.id + requestId` combination as unique identifier
+- Prevents duplicate counting of the same usage records
 
-### 4. 成本计算
+### 4. Cost Calculation
 
-成本计算有三种模式：
+Cost calculation has three modes:
 
-1. **auto**（默认）：优先使用预计算的 `costUSD`，如果没有则根据 token 计算
-2. **calculate**：始终根据 token 数量和模型定价计算
-3. **display**：只显示预计算的成本
+1. **auto** (default): Prioritizes pre-calculated `costUSD`, calculates from tokens if not available
+2. **calculate**: Always calculates based on token count and model pricing
+3. **display**: Only shows pre-calculated costs
 
-计算公式：
+Calculation formula:
 ```
-成本 = (输入tokens × 输入单价) + (输出tokens × 输出单价) + 缓存成本
+Cost = (input tokens × input price) + (output tokens × output price) + cache costs
 ```
 
-### 5. 会话和区块
+### 5. Sessions and Blocks
 
-- **会话区块**：5 小时为一个计费周期（Claude 的计费模型）
-- **会话识别**：通过时间间隔检测会话边界
-- **实时会话**：当前正在进行的会话会被特别标记
+- **Session blocks**: 5-hour billing cycles (Claude's billing model)
+- **Session identification**: Detects session boundaries through time intervals
+- **Active sessions**: Currently ongoing sessions are specially marked
 
-## Swift 实现要点
+## Swift Implementation Key Points
 
-要在 Swift 中实现类似功能，需要：
+To implement similar functionality in Swift:
 
-### 1. 查找 Claude 配置目录
+### 1. Find Claude Configuration Directory
 ```swift
 func findClaudeConfigDir() -> URL? {
-    // 检查环境变量
+    // Check environment variable
     if let envPath = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"] {
         return URL(fileURLWithPath: envPath)
     }
     
-    // 检查 XDG 配置
+    // Check XDG config
     if let xdgConfig = ProcessInfo.processInfo.environment["XDG_CONFIG_HOME"] {
         return URL(fileURLWithPath: xdgConfig).appendingPathComponent("claude")
     }
     
-    // 检查默认位置
+    // Check default locations
     let homeDir = FileManager.default.homeDirectoryForCurrentUser
     let configDir = homeDir.appendingPathComponent(".config/claude")
     let legacyDir = homeDir.appendingPathComponent(".claude")
@@ -120,7 +120,7 @@ func findClaudeConfigDir() -> URL? {
 }
 ```
 
-### 2. 读取 JSONL 文件
+### 2. Read JSONL Files
 ```swift
 func readJSONLFile(at url: URL) -> [UsageEntry] {
     guard let content = try? String(contentsOf: url) else { return [] }
@@ -136,7 +136,7 @@ func readJSONLFile(at url: URL) -> [UsageEntry] {
 }
 ```
 
-### 3. 监控文件变化
+### 3. Monitor File Changes
 ```swift
 class ClaudeDataMonitor {
     private var fileWatcher: DispatchSourceFileSystemObject?
@@ -160,7 +160,7 @@ class ClaudeDataMonitor {
 }
 ```
 
-### 4. 数据模型
+### 4. Data Models
 ```swift
 struct UsageData: Codable {
     let timestamp: Date
@@ -186,12 +186,12 @@ struct UsageData: Codable {
 }
 ```
 
-## 关键发现
+## Key Findings
 
-1. **本地数据**：所有数据都存储在本地，无需网络请求
-2. **实时更新**：Claude 每次使用后立即写入新的 JSONL 行
-3. **历史完整**：包含所有历史使用记录，可以进行详细分析
-4. **模型识别**：可以区分不同的 Claude 模型使用情况
-5. **成本透明**：包含预计算的成本信息
+1. **Local data**: All data is stored locally, no network requests needed
+2. **Real-time updates**: Claude writes new JSONL lines immediately after each use
+3. **Complete history**: Contains all historical usage records for detailed analysis
+4. **Model identification**: Can distinguish between different Claude model usage
+5. **Transparent costs**: Includes pre-calculated cost information
 
-这些信息为 CCMate 的 Swift 实现提供了清晰的数据获取路径。
+This information provides a clear data acquisition path for CCMate's Swift implementation.
