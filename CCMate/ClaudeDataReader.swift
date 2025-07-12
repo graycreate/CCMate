@@ -50,30 +50,48 @@ class ClaudeDataReader {
     }
     
     func readTodayUsage() -> [ClaudeUsageEntry] {
-        let filePath = getTodayUsageFilePath()
+        // First try today's file
+        let todayFilePath = getTodayUsageFilePath()
+        if fileManager.fileExists(atPath: todayFilePath.path) {
+            return readUsageFile(at: todayFilePath)
+        }
         
-        guard fileManager.fileExists(atPath: filePath.path) else {
-            // This is normal if Claude hasn't been used today
-            print("Claude usage file does not exist at: \(filePath.path)")
+        // If today's file doesn't exist, try to find the most recent usage file
+        // This handles timezone differences where the file might be from "yesterday" in local time
+        if let mostRecentFile = findMostRecentUsageFile() {
+            print("Today's file not found, using most recent: \(mostRecentFile.lastPathComponent)")
+            return readUsageFile(at: mostRecentFile)
+        }
+        
+        print("No Claude usage files found")
+        return []
+    }
+    
+    private func findMostRecentUsageFile() -> URL? {
+        guard fileManager.fileExists(atPath: claudeConfigPath.path) else {
+            return nil
+        }
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(at: claudeConfigPath, includingPropertiesForKeys: [.contentModificationDateKey])
+            let usageFiles = files.filter { $0.lastPathComponent.hasPrefix("usage_") && $0.pathExtension == "jsonl" }
             
-            // Let's check what files exist in the Claude config directory
-            if fileManager.fileExists(atPath: claudeConfigPath.path) {
-                do {
-                    let files = try fileManager.contentsOfDirectory(at: claudeConfigPath, includingPropertiesForKeys: nil)
-                    let usageFiles = files.filter { $0.lastPathComponent.contains("usage_") }
-                    print("Found \(usageFiles.count) usage files in Claude config:")
-                    for file in usageFiles {
-                        print("  - \(file.lastPathComponent)")
-                    }
-                } catch {
-                    print("Error listing Claude config directory: \(error)")
-                }
-            } else {
-                print("Claude config directory does not exist at: \(claudeConfigPath.path)")
+            // Sort by modification date, most recent first
+            let sortedFiles = usageFiles.sorted { file1, file2 in
+                let date1 = (try? file1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+                let date2 = (try? file2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? Date.distantPast
+                return date1 > date2
             }
             
-            return []
+            return sortedFiles.first
+        } catch {
+            print("Error finding usage files: \(error)")
+            return nil
         }
+    }
+    
+    private func readUsageFile(at filePath: URL) -> [ClaudeUsageEntry] {
+        print("Reading Claude usage file: \(filePath.path)")
         
         do {
             let content = try String(contentsOf: filePath, encoding: .utf8)
@@ -102,6 +120,7 @@ class ClaudeDataReader {
                 print("Warning: Failed to parse \(parseErrors) lines in Claude usage file")
             }
             
+            print("Successfully read \(entries.count) entries from \(filePath.lastPathComponent)")
             return entries
         } catch {
             print("Error reading Claude usage file at \(filePath.path): \(error.localizedDescription)")
@@ -124,9 +143,12 @@ class ClaudeDataReader {
         for entry in entries {
             guard let timestamp = dateFormatter.date(from: entry.timestamp) else { continue }
             
-            // Update hourly activity
-            let hour = Calendar.current.component(.hour, from: timestamp)
-            hourlyActivity[hour] += 1
+            // Update hourly activity (convert UTC to local time for display)
+            let localTimestamp = timestamp // The timestamp is already converted to Date, which respects local timezone
+            let hour = Calendar.current.component(.hour, from: localTimestamp)
+            if hour >= 0 && hour < 24 {
+                hourlyActivity[hour] += 1
+            }
             
             // Session detection
             if let last = lastTimestamp {
