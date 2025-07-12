@@ -1,0 +1,8 @@
+{"timestamp":"2025-07-12T01:30:45.123+0000","model":"claude-3-opus-20240229","input_tokens":1523,"output_tokens":2341,"cache_creation_input_tokens":0,"cache_read_input_tokens":450,"cost":0.143265}
+{"timestamp":"2025-07-12T01:35:12.456+0000","model":"claude-3-opus-20240229","input_tokens":892,"output_tokens":1567,"cache_creation_input_tokens":0,"cache_read_input_tokens":325,"cost":0.089745}
+{"timestamp":"2025-07-12T01:36:23.789+0000","model":"claude-3-opus-20240229","input_tokens":2145,"output_tokens":3210,"cache_creation_input_tokens":0,"cache_read_input_tokens":678,"cost":0.198450}
+{"timestamp":"2025-07-12T02:45:10.111+0000","model":"claude-3-opus-20240229","input_tokens":567,"output_tokens":890,"cache_creation_input_tokens":0,"cache_read_input_tokens":210,"cost":0.054123}
+{"timestamp":"2025-07-12T02:47:30.222+0000","model":"claude-3-opus-20240229","input_tokens":3456,"output_tokens":4567,"cache_creation_input_tokens":0,"cache_read_input_tokens":1234,"cost":0.285690}
+{"timestamp":"2025-07-12T03:15:45.333+0000","model":"claude-3-opus-20240229","input_tokens":789,"output_tokens":1234,"cache_creation_input_tokens":0,"cache_read_input_tokens":345,"cost":0.072456}
+{"timestamp":"2025-07-12T04:20:00.444+0000","model":"claude-3-5-sonnet-20241022","input_tokens":2341,"output_tokens":3456,"cache_creation_input_tokens":0,"cache_read_input_tokens":890,"cost":0.067890}
+{"timestamp":"2025-07-12T04:22:15.555+0000","model":"claude-3-5-sonnet-20241022","input_tokens":1234,"output_tokens":2345,"cache_creation_input_tokens":0,"cache_read_input_tokens":567,"cost":0.043210}

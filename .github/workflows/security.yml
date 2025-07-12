@@ -1,0 +1,78 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 12 * * 1'  # Weekly on Monday at noon UTC
+
+jobs:
+  dependency-check:
+    name: Dependency Check
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Check for outdated dependencies
+      run: |
+        # If using Swift Package Manager in future
+        if [ -f "Package.swift" ]; then
+          swift package show-dependencies
+          swift package update --dry-run
+        fi
+        
+    - name: License Check
+      run: |
+        # Check that all files have appropriate license headers
+        find . -name "*.swift" -type f | while read file; do
+          if ! grep -q "Copyright\|License\|MIT" "$file"; then
+            echo "Missing license header in: $file"
+          fi
+        done
+
+  code-quality:
+    name: Code Quality
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Check code complexity
+      run: |
+        # Install and run complexity analysis
+        if command -v swiftlint &> /dev/null; then
+          swiftlint analyze --reporter json > complexity-report.json || true
+        fi
+        
+    - name: Check for TODO/FIXME
+      run: |
+        echo "=== TODO/FIXME Comments ==="
+        grep -rn "TODO\|FIXME\|HACK" --include="*.swift" . || echo "No TODO/FIXME found"
+
+  permissions-audit:
+    name: Permissions Audit
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Audit Entitlements
+      run: |
+        echo "=== App Entitlements ==="
+        plutil -p CCMate/CCMate.entitlements
+        
+        # Check for dangerous entitlements
+        if grep -q "com.apple.security.app-sandbox.*false" CCMate/CCMate.entitlements; then
+          echo "WARNING: App sandbox is disabled!"
+          exit 1
+        fi
+        
+        # List all requested permissions
+        echo "=== Requested Permissions ==="
+        grep -E "com.apple.security" CCMate/CCMate.entitlements || true

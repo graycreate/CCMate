@@ -1,5 +1,11 @@
 # CCMate
 
+[![CI](https://github.com/graycreate/CCMate/actions/workflows/ci.yml/badge.svg)](https://github.com/graycreate/CCMate/actions/workflows/ci.yml)
+[![Security](https://github.com/graycreate/CCMate/actions/workflows/security.yml/badge.svg)](https://github.com/graycreate/CCMate/actions/workflows/security.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/platform-macOS-blue.svg)](https://www.apple.com/macos/)
+[![Swift Version](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
+
 Claude Code companion app - A macOS menubar app for tracking daily Claude Code usage statistics.
 
 ## Overview
