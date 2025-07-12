@@ -13,6 +13,9 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: write
+
 jobs:
   create-release:
     name: Create Release
@@ -132,8 +135,13 @@ jobs:
     - name: Create Git Tag
       run: |
         VERSION="${{ inputs.version }}"
-        git tag -a "v${VERSION}" -m "Release version ${VERSION}"
-        git push origin "v${VERSION}"
+        # Check if tag already exists
+        if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+          echo "Tag v${VERSION} already exists, skipping tag creation"
+        else
+          git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+          git push origin "v${VERSION}"
+        fi
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
