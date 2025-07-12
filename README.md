@@ -1,5 +1,11 @@
 # CCMate
 
+[![CI](https://github.com/graycreate/CCMate/actions/workflows/ci.yml/badge.svg)](https://github.com/graycreate/CCMate/actions/workflows/ci.yml)
+[![Security](https://github.com/graycreate/CCMate/actions/workflows/security.yml/badge.svg)](https://github.com/graycreate/CCMate/actions/workflows/security.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Platform](https://img.shields.io/badge/platform-macOS-blue.svg)](https://www.apple.com/macos/)
+[![Swift Version](https://img.shields.io/badge/Swift-6.1-orange.svg)](https://swift.org)
+
 Claude Code companion app - A macOS menubar app for tracking daily Claude Code usage statistics.
 
 ## Overview
@@ -8,15 +14,23 @@ CCMate is a lightweight macOS menubar application that helps you track and visua
 
 ## Features
 
-- **Menubar Integration**: Always accessible from your macOS menubar
-- **Real-time Statistics**: Track your daily Claude Code usage in real-time
-- **Minimal UI**: Clean and simple interface that stays out of your way
-- **Native macOS App**: Built with Swift 6.1 and SwiftUI for optimal performance
+- **Real-time Usage Tracking**: Automatically reads Claude's JSONL log files from `~/.config/claude/`
+- **Live Updates**: Monitors file changes and updates statistics in real-time
+- **Session Detection**: Intelligently detects coding sessions (5+ minute gaps create new sessions)
+- **Daily Statistics**: 
+  - Total usage time
+  - Number of sessions
+  - Average session duration
+  - Last active timestamp
+- **Hourly Activity Chart**: Visual breakdown of usage throughout the day
+- **Native macOS Design**: Clean interface following Apple's Human Interface Guidelines
+- **Minimal Resource Usage**: Lightweight app that stays out of your way
 
 ## Requirements
 
 - macOS 15.0 (Sequoia) or later
-- Xcode 16.3 or later
+- Xcode 16.3 or later (for building from source)
+- Claude Code installed (data is read from `~/.config/claude/usage_*.jsonl`)
 
 ## Installation
 
@@ -35,7 +49,15 @@ CCMate is a lightweight macOS menubar application that helps you track and visua
 
 ## Usage
 
-Once launched, CCMate will appear in your menubar. Click on the icon to view your daily statistics.
+Once launched, CCMate will appear in your menubar with a bar chart icon. Click on it to view:
+
+- **Today's Usage**: Total time spent using Claude Code today
+- **Sessions**: Number of distinct coding sessions
+- **Avg. Session**: Average duration of your sessions
+- **Last Active**: When you last used Claude Code
+- **Hourly Activity**: Bar chart showing usage distribution
+
+The app automatically updates as you use Claude Code, with no manual tracking required. If you haven't used Claude today, it will show a helpful message.
 
 ## Development
 

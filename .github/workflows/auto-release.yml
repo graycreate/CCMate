@@ -1,0 +1,240 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-release:
+    name: Check if release needed
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      new_version: ${{ steps.check.outputs.new_version }}
+      
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Check for release triggers
+      id: check
+      run: |
+        # Get latest tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        echo "Latest tag: $LATEST_TAG"
+        
+        # Check commits since last tag
+        COMMITS=$(git log ${LATEST_TAG}..HEAD --oneline)
+        if [ -z "$COMMITS" ]; then
+          echo "No new commits since last release"
+          echo "should_release=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        # Parse version from latest tag
+        VERSION=${LATEST_TAG#v}
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+        
+        # Determine version bump based on conventional commits
+        if git log ${LATEST_TAG}..HEAD --pretty=format:"%s" | grep -qE "^(feat!|fix!|BREAKING CHANGE)"; then
+          # Major version bump
+          MAJOR=$((MAJOR + 1))
+          MINOR=0
+          PATCH=0
+        elif git log ${LATEST_TAG}..HEAD --pretty=format:"%s" | grep -qE "^feat(\(.*\))?:"; then
+          # Minor version bump
+          MINOR=$((MINOR + 1))
+          PATCH=0
+        elif git log ${LATEST_TAG}..HEAD --pretty=format:"%s" | grep -qE "^(fix|chore|docs|style|refactor|test|perf)(\(.*\))?:"; then
+          # Patch version bump
+          PATCH=$((PATCH + 1))
+        else
+          echo "No conventional commits found"
+          echo "should_release=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+        echo "New version: v${NEW_VERSION}"
+        echo "should_release=true" >> $GITHUB_OUTPUT
+        echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+  create-release:
+    name: Create Release
+    needs: check-release
+    if: needs.check-release.outputs.should_release == 'true'
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode_16.3.app
+      
+    - name: Update Version
+      run: |
+        VERSION="${{ needs.check-release.outputs.new_version }}"
+        
+        # Update Info.plist version
+        if [ -f "CCMate/Info.plist" ]; then
+          plutil -replace CFBundleShortVersionString -string "$VERSION" CCMate/Info.plist
+          plutil -replace CFBundleVersion -string "$VERSION" CCMate/Info.plist
+        fi
+        
+        # Update version in AppConstants if exists
+        if [ -f "CCMate/AppConstants.swift" ]; then
+          sed -i '' "s/static let appVersion = \".*\"/static let appVersion = \"$VERSION\"/" CCMate/AppConstants.swift
+        fi
+        
+    - name: Build Release
+      run: |
+        xcodebuild archive \
+          -project "CCMate.xcodeproj" \
+          -scheme "CCMate" \
+          -configuration Release \
+          -archivePath "build/CCMate.xcarchive" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          ONLY_ACTIVE_ARCH=NO
+          
+    - name: Export Archive
+      run: |
+        # Create export options plist if it doesn't exist
+        if [ ! -f "scripts/export-options.plist" ]; then
+          mkdir -p scripts
+          cat > scripts/export-options.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>mac-application</string>
+    <key>teamID</key>
+    <string></string>
+</dict>
+</plist>
+EOF
+        fi
+        
+        xcodebuild -exportArchive \
+          -archivePath "build/CCMate.xcarchive" \
+          -exportPath "build/export" \
+          -exportOptionsPlist "scripts/export-options.plist" \
+          || {
+            # Fallback: copy app directly if export fails
+            mkdir -p build/export
+            cp -R "build/CCMate.xcarchive/Products/Applications/CCMate.app" "build/export/"
+          }
+          
+    - name: Create DMG
+      run: |
+        VERSION="${{ needs.check-release.outputs.new_version }}"
+        APP_NAME="CCMate"
+        DMG_NAME="${APP_NAME}-${VERSION}.dmg"
+        
+        # Create temporary directory for DMG
+        mkdir -p build/dmg
+        cp -R "build/export/${APP_NAME}.app" build/dmg/
+        
+        # Create Applications symlink
+        ln -s /Applications build/dmg/Applications
+        
+        # Create DMG
+        hdiutil create -volname "${APP_NAME}" \
+          -srcfolder build/dmg \
+          -ov -format UDZO \
+          -fs HFS+ \
+          -imagekey zlib-level=9 \
+          "build/${DMG_NAME}"
+          
+        echo "DMG_PATH=build/${DMG_NAME}" >> $GITHUB_ENV
+        
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        VERSION="${{ needs.check-release.outputs.new_version }}"
+        
+        # Get latest tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        # Generate release notes
+        echo "## CCMate v${VERSION}" > release_notes.md
+        echo "" >> release_notes.md
+        echo "Released on $(date +'%Y-%m-%d')" >> release_notes.md
+        echo "" >> release_notes.md
+        
+        if [ -n "$LATEST_TAG" ]; then
+          echo "### What's Changed" >> release_notes.md
+          echo "" >> release_notes.md
+          
+          # Group commits by type
+          echo "#### 🚀 Features" >> release_notes.md
+          git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" | grep "^feat" | sed 's/feat(\(.*\)): /\1: /' | sed 's/feat: //' || echo "- No new features"
+          echo "" >> release_notes.md
+          
+          echo "#### 🐛 Bug Fixes" >> release_notes.md
+          git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" | grep "^fix" | sed 's/fix(\(.*\)): /\1: /' | sed 's/fix: //' || echo "- No bug fixes"
+          echo "" >> release_notes.md
+          
+          echo "#### 📚 Documentation" >> release_notes.md
+          git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" | grep "^docs" | sed 's/docs(\(.*\)): /\1: /' | sed 's/docs: //' || echo "- No documentation updates"
+          echo "" >> release_notes.md
+          
+          echo "#### 🔧 Other Changes" >> release_notes.md
+          git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" | grep -vE "^(feat|fix|docs)" || echo "- No other changes"
+          echo "" >> release_notes.md
+          
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LATEST_TAG}...v${VERSION}" >> release_notes.md
+        else
+          echo "### 🎉 Initial Release" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "First release of CCMate - your Claude Code usage tracking companion!" >> release_notes.md
+        fi
+        
+        echo "" >> release_notes.md
+        echo "### 📦 Installation" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "1. Download the \`CCMate-${VERSION}.dmg\` file from the assets below" >> release_notes.md
+        echo "2. Open the DMG and drag CCMate to your Applications folder" >> release_notes.md
+        echo "3. Launch CCMate from your Applications folder" >> release_notes.md
+        echo "4. Grant necessary permissions when prompted" >> release_notes.md
+        
+    - name: Create Git Tag
+      run: |
+        VERSION="${{ needs.check-release.outputs.new_version }}"
+        git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+        git push origin "v${VERSION}"
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ needs.check-release.outputs.new_version }}
+        name: CCMate v${{ needs.check-release.outputs.new_version }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: false
+        files: |
+          build/*.dmg
+          
+    - name: Upload Release Metrics
+      run: |
+        # Log release metrics for monitoring
+        echo "Release created: v${{ needs.check-release.outputs.new_version }}"
+        echo "DMG size: $(du -h ${{ env.DMG_PATH }} | cut -f1)"
+        echo "Build date: $(date)"

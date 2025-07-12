@@ -13,7 +13,7 @@ struct ContentView: View {
             
             HourlyChartView()
                 .padding(.horizontal)
-                .padding(.bottom)
+                .padding(.bottom, 8)
             
             Divider()
             
@@ -51,37 +51,53 @@ struct StatsView: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 20) {
-                StatCard(
-                    title: "Today's Usage",
-                    value: appState.dailyStats.formattedTime,
-                    icon: "clock.fill",
-                    color: .blue
-                )
-                
-                StatCard(
-                    title: "Sessions",
-                    value: "\(appState.dailyStats.sessionsCount)",
-                    icon: "square.stack.fill",
-                    color: .green
-                )
+        if appState.dailyStats.totalMinutes == 0 && appState.dailyStats.sessionsCount == 0 {
+            VStack(spacing: 12) {
+                Image(systemName: "doc.text.magnifyingglass")
+                    .font(.largeTitle)
+                    .foregroundColor(.secondary)
+                Text("No Claude usage detected today")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                Text("Start using Claude Code to see your stats")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            
-            HStack(spacing: 20) {
-                StatCard(
-                    title: "Avg. Session",
-                    value: appState.dailyStats.averageSessionLength,
-                    icon: "chart.line.uptrend.xyaxis",
-                    color: .orange
-                )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding()
+        } else {
+            VStack(spacing: 16) {
+                HStack(spacing: 20) {
+                    StatCard(
+                        title: "Today's Usage",
+                        value: appState.dailyStats.formattedTime,
+                        icon: "clock.fill",
+                        color: .blue
+                    )
+                    
+                    StatCard(
+                        title: "Sessions",
+                        value: "\(appState.dailyStats.sessionsCount)",
+                        icon: "square.stack.fill",
+                        color: .green
+                    )
+                }
                 
-                StatCard(
-                    title: "Last Active",
-                    value: formatTime(appState.dailyStats.lastUpdated),
-                    icon: "clock.arrow.circlepath",
-                    color: .purple
-                )
+                HStack(spacing: 20) {
+                    StatCard(
+                        title: "Avg. Session",
+                        value: appState.dailyStats.averageSessionLengthFormatted,
+                        icon: "chart.line.uptrend.xyaxis",
+                        color: .orange
+                    )
+                    
+                    StatCard(
+                        title: "Last Active",
+                        value: formatTime(appState.dailyStats.lastUpdated),
+                        icon: "clock.arrow.circlepath",
+                        color: .purple
+                    )
+                }
             }
         }
     }

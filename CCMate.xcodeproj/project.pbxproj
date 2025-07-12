@@ -10,6 +10,8 @@
 		B4A1F1232C5E7A8900123456 /* CCMateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A1F1222C5E7A8900123456 /* CCMateApp.swift */; };
 		B4A1F1252C5E7A8900123456 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A1F1242C5E7A8900123456 /* ContentView.swift */; };
 		B4A1F1272C5E7A8A00123456 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B4A1F1262C5E7A8A00123456 /* Assets.xcassets */; };
+		B4A1F1282C5E7A8900123457 /* ClaudeDataReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A1F1292C5E7A8900123457 /* ClaudeDataReader.swift */; };
+		B4A1F12A2C5E7A8900123458 /* FileMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4A1F12C2C5E7A8900123458 /* FileMonitor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +20,8 @@
 		B4A1F1242C5E7A8900123456 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B4A1F1262C5E7A8A00123456 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B4A1F12B2C5E7A8A00123456 /* CCMate.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CCMate.entitlements; sourceTree = "<group>"; };
+		B4A1F1292C5E7A8900123457 /* ClaudeDataReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeDataReader.swift; sourceTree = "<group>"; };
+		B4A1F12C2C5E7A8900123458 /* FileMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileMonitor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +56,8 @@
 			children = (
 				B4A1F1222C5E7A8900123456 /* CCMateApp.swift */,
 				B4A1F1242C5E7A8900123456 /* ContentView.swift */,
+				B4A1F1292C5E7A8900123457 /* ClaudeDataReader.swift */,
+				B4A1F12C2C5E7A8900123458 /* FileMonitor.swift */,
 				B4A1F1262C5E7A8A00123456 /* Assets.xcassets */,
 				B4A1F12B2C5E7A8A00123456 /* CCMate.entitlements */,
 			);
@@ -129,6 +135,8 @@
 			files = (
 				B4A1F1252C5E7A8900123456 /* ContentView.swift in Sources */,
 				B4A1F1232C5E7A8900123456 /* CCMateApp.swift in Sources */,
+				B4A1F1282C5E7A8900123457 /* ClaudeDataReader.swift in Sources */,
+				B4A1F12A2C5E7A8900123458 /* FileMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
